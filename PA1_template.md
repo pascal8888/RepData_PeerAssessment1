@@ -1,18 +1,9 @@
----
-title: "Reproducible Research: Peer Assessment 1"
-output: 
-  html_document:
-    keep_md: true
----
+# Reproducible Research: Peer Assessment 1
 
 
 ## Loading and preprocessing the data
-```{r}
-if (!require("plyr")) {
-    install.packages("plyr")
-}
-require("plyr")
-require("lubridate")
+
+```r
 download.file("http://d396qusza40orc.cloudfront.net/repdata%2Fdata%2Factivity.zip","repdata.zip",mode="wb")
 unzip("repdata.zip")
 repdata <- read.csv("activity.csv", header=T)
@@ -21,12 +12,7 @@ repdata$date <- as.Date(repdata$date)
 
 
 ## What is mean total number of steps taken per day?
-```{r}
-repdata <- mutate(repdata, Day = paste(year(date),yday(date)))
-repdata$Day <- as.numeric(sub(" ","",repdata$Day))
-byDay <- ddply(repdata, "Day", summarize, DayMean = mean(steps), DayMedian = median(steps), DayTotal = sum(steps))
 
-```
 
 
 ## What is the average daily activity pattern?
@@ -38,6 +24,7 @@ byDay <- ddply(repdata, "Day", summarize, DayMean = mean(steps), DayMedian = med
 
 
 ## Are there differences in activity patterns between weekdays and weekends?
-```{r}
+
+```r
 #rm(list=ls())
 ```
