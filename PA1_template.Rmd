@@ -21,17 +21,21 @@ if (!require("plyr")) {
 if (!require("lubridate")) {
     install.packages("lubridate")
 }
+if (!require("lattice")) {
+    install.packages("lattice")
+}
 require("plyr")
 require("lubridate")
+require("lattice")
 ```
 ```{r}
-totalByDate <- aggregate(steps ~ date, repdata, sum, na.action="na.pass",na.rm=T)
+totalByDate <- aggregate(steps ~ date, repdata, sum, na.rm=F)
 stepsByInterval <- aggregate(steps ~ interval, data = repdata, FUN = mean)
 ```
 ## What is mean total number of steps taken per day?
 1 Make a histogram of the total number of steps taken each day
 ```{r}
-hist(totalByDate$steps,30,col="blue",main="Total Steps Per Day", ylab="Number of Days with Value", xlab="Value (Steps) for Day")
+hist(totalByDate$steps,30,col="blue",main="Total Steps Per Day - With NA Values", ylab="Number of Days with Value", xlab="Value (Steps) for Day")
 ```
 
 
@@ -64,21 +68,39 @@ sum(is.na(repdata))
 2 Devise a strategy for filling in all of the missing values in the dataset. The strategy does not need to be sophisticated. For example, you could use the mean/median for that day, or the mean for that 5-minute interval, etc.
 ```{r}
 ```
-#### Strategy - Use the mean for the day to fill in missing values
+#### Strategy - Use the mean for the interval to fill in missing values
 3 Create a new dataset that is equal to the original dataset but with the missing data filled in.
 ```{r}
 imputed_repdata <- repdata
-y <- which(is.na(imputed_repdata$steps)==TRUE)
-avg_for_day <- function(date) {
-    j <- which(totalByDate$date == date)
-    totalByDate[j,2] / 288
-}
-l <- imputed_repdata[y,]
-for (i in 1:nrow(totalByDate)) {if (totalByDate[i,2]==0) {totalByDate[i,2] <- 37}}
-for (i in 1:length(y)) {l[i,1] <- avg_for_day(l[i]$date)}
-View(imputed_repdata)
+impute_mean <- function(x) replace(x, is.na(x), mean(x, na.rm = TRUE))
+imputed_repdata <- ddply(repdata, ~interval, transform, steps = impute_mean(steps))
+imputed_repdata<- imputed_repdata[with(imputed_repdata, order(date, interval)), ]
+imputed_total <- aggregate(steps ~ date, data = imputed_repdata, sum)
 ```
-## Are there differences in activity patterns between weekdays and weekends?
+4 Make a histogram of the total number of steps taken each day and Calculate and report the mean and median total number of steps taken per day. Do these values differ from the estimates from the first part of the assignment? What is the impact of imputing missing data on the estimates of the total daily number of steps?
 ```{r}
+hist(imputed_total$steps, breaks = 30, col = "green", xlab = "Value (Steps) for Day",ylab="Number of Days with Value", main = "Total Steps Per Day - With Imputed Values for NA")
+mean(imputed_total$steps)
+median(imputed_total$steps)
+```
+
+
+
+
+## Are there differences in activity patterns between weekdays and weekends?
+1 Create a new factor variable in the dataset with two levels -- "weekday" and "weekend" indicating whether a given date is a weekday or weekend day.
+```{r}
+imputed_repdata$weekday <- weekdays(strptime(imputed_repdata$date, format = "%Y-%m-%d"))
+weekend <- imputed_repdata$weekday == "Saturday" | imputed_repdata$weekday == "Sunday"
+imputed_repdata$weekday[weekend] <- "weekend"
+imputed_repdata$weekday[!weekend] <- "weekday"
+```
+2 Make a panel plot containing a time series plot (i.e. type = "l") of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all weekday days or weekend days (y-axis). 
+```{r}
+xyplot(steps ~ interval | weekday, data = imputed_repdata, layout=c(1,2), type="l")
+```
+
+
+```{r echo=FALSE, results='hide',message=FALSE}
 #rm(list=ls())
 ```
